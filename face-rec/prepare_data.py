@@ -9,7 +9,7 @@ from utils import get_face, get_encode, l2_normalizer, normalize
 # hyper-parameters
 encoder_model = 'facenet_keras.h5'
 people_dir = 'data/Faces'
-encodings_path = 'data/encodings/encodings.pkl'
+encodings_path = 'encodings/encodings.pkl'
 required_size = (160, 160)
 
 face_detector = mtcnn.MTCNN()
