@@ -3,6 +3,12 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const app = express();
 const port = 3000;
+const swaggerUi = require('swagger-ui-express');
+const { swaggerSpec } = require('./swagger');
+const UserController = require('./controllers/UserController');
+const permissionController = require('./controllers/PermissionController');
+const AttendanceLogController = require('./controllers/AttendanceLogController');
+const GateController = require('./controllers/GateController');
 
 // Middleware
 app.use(express.json());
@@ -14,6 +20,12 @@ app.use(
 );
 app.use(cookieParser());
 
+app.use('/api/user', UserController);
+app.use('/api/permission', permissionController);
+app.use('/api/attendance', AttendanceLogController);
+app.use('/api/gate', GateController);
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/api/', (req, res) => {
 	res.send('Backend Server is running.');
 });
