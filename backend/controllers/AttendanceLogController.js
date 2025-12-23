@@ -1,74 +1,31 @@
 const express = require('express');
 const router = express.Router();
-router.get('/', async (req, res) => {
-    try {
-      return res.status(200).json();
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({message: 'Error server'});
-    }
-});
+const AttendanceLogService = require('../services/AttendanceLogService');
+const { authMiddleware, authorizeRole } = require('../middleware/auth');
 
-router.post('/', async (req, res) => {
-    try {
-      res.status(201).json({message: ''});
-    } catch (error) {
-      if (error.code === '23505') return res.status(409).json({message: ''});
-  
-      console.error(error);
-      res.status(500).json({message: 'Error server'});
-    }
-});
-
-router.put('/:id', async (req, res) => {
-  const {id} = req.params;
-	const updatedData = req.body;
-
-  if (Object.keys(updatedData).length === 0) {
-    return res.status(400).json({message: 'Data yang akan diupdate tidak boleh kosong'});
-  }
-
+router.get('/', authMiddleware, authorizeRole('admin'), async (req, res) => {
   try {
-    const payload = {};
-    const itemId = parseInt(id);
-
-    const updateItem = await Service.update(itemId, payload);
-
-    if (!updateItem) {
-      return res.status(404).json({message: 'Item tidak ditemukan'});
-    }
-
-    res.status(200).json({message: 'Item berhasil diedit', item: updateItem});
+    const logs = await AttendanceLogService.getAll();
+    return res.status(200).json(logs);
   } catch (error) {
-    if (error.code === '23505') {
-      return res.status(409).json({message: 'item sudah digunakan.'});
-    }
-
     console.error(error);
-    res.status(500).json({message: 'Server error'});
+    return res.status(500).json({ message: 'Error server' });
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, authorizeRole('admin'), async (req, res) => {
   const { id } = req.params;
-
   try {
     const itemId = parseInt(id);
+    if (isNaN(itemId)) return res.status(400).json({ message: 'ID log tidak valid' });
 
-    if (isNaN(itemId)) {
-      return res.status(400).json({message: 'ID item tidak valid'});
-    }
+    const deletedCount = await AttendanceLogService.delete(itemId);
+    if (deletedCount === 0) return res.status(404).json({ message: 'Log tidak ditemukan' });
 
-    const deletedCount = await Service.delete(itemId);
-
-    if (deletedCount === 0) {
-      return res.status(404).json({message: 'Item tidak ditemukan'});
-    }
-      
-    return res.status(200).json({message: 'Item berhasil dihapus'});
+    return res.status(200).json({ message: 'Log berhasil dihapus' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({message: 'Server error'});
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

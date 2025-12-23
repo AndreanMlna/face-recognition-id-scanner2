@@ -2,18 +2,11 @@ const knex = require('../config/database');
 
 const AttendanceLogService = {
   getAll: async () => {
-  },
-
-  getById: async (id) => {
-  },
-
-  create: async (data) => {
-  },
-
-  update: async (id, data) => {
+    return await knex('attendance_logs').select('*').orderBy('created_at', 'desc');
   },
 
   delete: async (id) => {
+    return await knex('attendance_logs').where({ id }).del();
   }
 };
 
