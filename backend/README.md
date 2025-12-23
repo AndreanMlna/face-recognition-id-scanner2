@@ -53,25 +53,34 @@ Sistem Backend untuk pengelolaan perizinan keluar-masuk kampus asrama menggunaka
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/username/project-name.git
+git clone https://github.com/cardinaldeacre/Face-Recognition-ID-Scanner.git
 cd backend
-2️⃣ Install Dependensi
-bash
-Copy code
-npm install
-3️⃣ Konfigurasi Environment
-Buat file .env di root folder dan isi sesuai kebutuhan:
+```
 
-env
-Copy code
-PORT=3000
-DATABASE_URL=postgres://user:password@localhost:5432/db_name
-JWT_SECRET=rahasia_super_kuat
-JWT_REFRESH_SECRET=rahasia_refresh_token
-NODE_ENV=development
+2️⃣ Install Dependensi
+```bash
+npm install
+```
+
+3️⃣ Konfigurasi Environment
+Copy file .env.example di root folder backend dan beri DB_NAME sesuai di database postgresql
+
+contoh
+```bash
+ENVIRONMENT=development
+DB_HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=
+DB_NAME=face_recognition
+DB_PORT=5432
+DB_CLIENT=pg
+
+JWT_SECRET=BebasRahasia
+JWT_REFRESH_SECRET=BebasRefresh
+```
+
 4️⃣ Menjalankan Migrasi & Seeder
-bash
-Copy code
+```bash
 # Menjalankan tabel database
 npx knex migrate:latest
 
@@ -79,19 +88,22 @@ npx knex migrate:latest
 # NIM: admin01
 # Password: admin123
 npx knex seed:run
+```
+
 5️⃣ Menjalankan Server
-bash
-Copy code
+```bash
 npm run dev
+```
+
 📖 Dokumentasi API
 Setelah server berjalan, buka browser dan akses dokumentasi API interaktif di:
-
-bash
-Copy code
+```bash
 http://localhost:3000/api-docs
+```
+
 🗄️ Struktur Folder
 plaintext
-Copy code
+```bash
 backend/
 ├── config/             # Konfigurasi database & aplikasi
 ├── controllers/        # Logika route & Swagger JSDoc
@@ -99,6 +111,7 @@ backend/
 ├── migrations/         # Skema tabel PostgreSQL
 ├── seeds/              # Data awal (Admin & Dummy)
 ├── services/           # Logika bisnis & query database
+├── swagger/            # Dokumentasi API dengan swagger
 ├── server.js           # Entry point aplikasi
 └── .env                # Variabel lingkungan
 ```
