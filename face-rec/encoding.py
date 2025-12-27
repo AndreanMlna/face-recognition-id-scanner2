@@ -90,6 +90,7 @@ for nim, vector in encoding_dict.items():
             
     except Exception as e:
         print(f"Gagal menyimpan untuk NIM {nim}: {e}")
+        
 conn.commit()
 cursor.close()
 conn.close()
