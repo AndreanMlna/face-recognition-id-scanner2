@@ -8,7 +8,7 @@ const GateService = {
             .timeout(5000)
 
         let bestMatch = null;
-        let minDistance = 0.6;
+        let minDistance = 0.2;
 
         users.forEach(user => {
             const storedEmbedding = typeof user.face_embedding === 'string'

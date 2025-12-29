@@ -26,7 +26,7 @@ def send_to_backend(embedding, nim):
         print(f"⚠️ [BACKEND] Koneksi Error: {e}")
     return None
 
-def recognize(img, detector, encoder, encoding_dict, recognition_t=0.4, confidence_t=0.99, required_size=(160, 160)):
+def recognize(img, detector, encoder, encoding_dict, recognition_t=0.2, confidence_t=0.99, required_size=(160, 160)):
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     results = detector.detect_faces(img_rgb)
 
