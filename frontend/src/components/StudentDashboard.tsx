@@ -86,56 +86,82 @@ export default function StudentDashboard() {
   return (
     <div className="content-area active">
       {/* HEADER ACTIONS */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, gap: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20 }}>
         <button onClick={handleLogout} className="logout-btn">
           Logout
         </button>
       </div>
 
       {/* --- FORM PENGAJUAN IZIN --- */}
-      <section className="card">
-        <h2>📝 New License Request</h2>
+      <section className="card" style={{ marginBottom: 24 }}>
+        <div style={{ borderBottom: '2px solid #2196F3', marginBottom: 20, paddingBottom: 10 }}>
+          <h2 style={{ margin: 0 }}>📝 New License Request</h2>
+          <p style={{ color: '#666', fontSize: '0.9rem', margin: '5px 0 0 0' }}>
+            Isi formulir di bawah untuk mengajukan izin keluar lingkungan.
+          </p>
+        </div>
+
         <form onSubmit={onSubmit}>
-             <div className="form-group">
-                <label>Keperluan:</label>
-                <input
-                  type="text"
-                  value={form.purpose}
-                  onChange={(e) => setForm({ ...form, purpose: e.target.value })}
-                  placeholder="Contoh : Membeli charger"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Waktu Berangkat</label>
-                <input
-                  type="datetime-local"
-                  value={form.start_time}
-                  onChange={(e) => setForm({ ...form, start_time: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Waktu Pulang</label>
-                <input
-                  type="datetime-local"
-                  value={form.end_time}
-                  onChange={(e) => setForm({ ...form, end_time: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Durasi (Menit)</label>
-                <input type="text" value={duration} readOnly style={{ backgroundColor: '#f5f5f5' }} />
-              </div>
-              <button type="submit" className="submit-btn">
-                Submit Request
-              </button>
+          <div className="form-group">
+            <label style={{ fontWeight: 'bold' }}>Keperluan / Alasan:</label>
+            <input
+              type="text"
+              value={form.purpose}
+              onChange={(e) => setForm({ ...form, purpose: e.target.value })}
+              placeholder="Contoh : Membeli charger laptop"
+              required
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: 15 }}>
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ fontWeight: 'bold' }}>Waktu Berangkat:</label>
+              <input
+                type="datetime-local"
+                value={form.start_time}
+                onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ fontWeight: 'bold' }}>Waktu Pulang:</label>
+              <input
+                type="datetime-local"
+                value={form.end_time}
+                onChange={(e) => setForm({ ...form, end_time: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label style={{ fontWeight: 'bold' }}>Estimasi Durasi (Menit):</label>
+            <input 
+              type="text" 
+              value={duration} 
+              readOnly 
+              style={{ 
+                backgroundColor: '#f5f5f5', 
+                fontWeight: 'bold', 
+                color: '#2196F3',
+                cursor: 'not-allowed'
+              }} 
+            />
+          </div>
+
+          <button type="submit" className="submit-btn" style={{ width: '100%', marginTop: 10 }}>
+            Kirim Pengajuan Izin
+          </button>
         </form>
       </section>
 
-      {/* --- TABEL RIWAYAT & EVENT --- */}
-      <HistoryTable applications={history} loading={loading} />
+      {/* --- TABEL RIWAYAT --- */}
+      <div style={{ marginBottom: 24 }}>
+        <HistoryTable applications={history} loading={loading} />
+      </div>
+
+      {/* --- EVENT LIST --- */}
       <EventList events={events} />
     </div>
   );
