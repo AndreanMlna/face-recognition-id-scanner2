@@ -26,19 +26,21 @@ export interface Permissions {
 }
 
 // --- PERBAIKAN DI SINI ---
+// Sesuaikan dengan data JSON database: [{"id":1,"permission_id":1,"user_id":7,"type":"OUT","timestamp":"..."}]
 export interface ScanLog {
   id: number;
-  student_name: string;
-  student_nim: string;
-  // Ubah 'type' menjadi 'attendance_status'
-  attendance_status: 'check_in' | 'check_out' | 'rejected'; 
-  // Ubah 'timestamp' menjadi 'updated_at'
-  updated_at: string; 
+  user_id: number;
+  permission_id: number;
+  type: 'IN' | 'OUT'; // Sesuai kolom 'type' di database
+  timestamp: string;  // Sesuai kolom 'timestamp' di database
+  
+  // Tambahkan ini agar tidak error saat AdminDashboard mencoba akses nama
+  student_name?: string; 
+  student_nim?: string;
 }
 // -------------------------
 
 // --- STUDENT PERMISSIONS ---
-
 export async function getMyPermissionHistory(): Promise<Permissions[]> {
   const res = await api.get<Permissions[]>('/api/permission/my-history');
   return res.data;
@@ -55,7 +57,6 @@ export async function requestPermission(payload: {
 }
 
 // --- ADMIN PERMISSIONS ---
-
 export async function getAllPermissionsAdmin(): Promise<Permissions[]> {
   const res = await api.get<Permissions[]>('/api/permission/admin/all');
   return res.data;
@@ -72,13 +73,12 @@ export async function updatePermissionStatus(
 // --- FUNGSI FETCH LOG SCANNER (ADMIN) ---
 export async function getRecentScanLogs(): Promise<ScanLog[]> {
   const res = await api.get('/api/attendance/recent');
-  // Pastikan backend Anda mengembalikan properti: 
-  // id, student_name, student_nim, attendance_status, updated_at
-  return res.data.data; 
+  // Jika backend Anda mengirimkan data dalam bentuk { status: 'success', data: [...] }
+  // Pastikan return mengarah ke array-nya.
+  return Array.isArray(res.data) ? res.data : (res.data as any).data || []; 
 }
 
 // --- FACE RECOGNITION SERVICE (PYTHON) ---
-
 export async function verifyAttendance(imageBlob: Blob) {
   const formData = new FormData();
   formData.append('image', imageBlob, 'capture.jpg'); 
