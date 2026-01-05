@@ -25,10 +25,6 @@ export default function AdminDashboard() {
 
   const [eventForm, setEventForm] = useState({ name: '', details: '' });
 
-  // PERBAIKAN 1 & 2: Hapus 'loading' dan 'permissionForm' karena tidak digunakan
-  // Kode sebelumnya: const [loading, setLoading] = useState(true);
-  // Kode sebelumnya: const [permissionForm, setPermissionForm] = useState({...});
-
   async function load() {
     try {
       const [historyData, logsData] = await Promise.all([
@@ -45,7 +41,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (showGateScanner) {
       load();
-      pollingRef.current = window.setInterval(load, 3000);
+      // Tetap gunakan polling sebagai backup, tapi trigger utama ada di onScanSuccess
+      pollingRef.current = window.setInterval(load, 5000);
     } else {
       if (pollingRef.current) clearInterval(pollingRef.current);
     }
@@ -63,9 +60,6 @@ export default function AdminDashboard() {
     setEventForm({ name: '', details: '' });
     alert('Event published!');
   };
-
-  // PERBAIKAN 3: Hapus fungsi 'submitPermission' karena tidak digunakan
-  // Admin menggunakan 'onApprove' dan 'onDeny' untuk mengelola izin mahasiswa.
 
   async function onApprove(id: number) {
     await updatePermissionStatus(id, 'accepted');
@@ -113,7 +107,8 @@ export default function AdminDashboard() {
                 <span className="status-badge status-badge--accepted" style={{ animation: 'pulse 1.5s infinite' }}>LIVE</span>
               </div>
               <div style={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', border: '1px solid #ddd', backgroundColor: '#000' }}>
-                <FaceScanner />
+                {/* --- PERBAIKAN: Tambahkan onScanSuccess untuk memicu fungsi load() secara instan --- */}
+                <FaceScanner onScanSuccess={load} />
               </div>
             </div>
 
@@ -131,12 +126,12 @@ export default function AdminDashboard() {
                       <li key={log.id} style={{ padding: '12px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '1.2rem' }}>{log.attendance_status === 'check_in' ? '📥' : '📤'}</span>
-                            <strong style={{ color: '#2c3e50' }}>{log.student_name}</strong>
+                            <span style={{ fontSize: '1.2rem' }}>{log.type === 'IN' ? '📥' : '📤'}</span>
+                            <strong style={{ color: '#2c3e50' }}>{log.user_id}</strong>
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: '#7f8c8d', marginLeft: '32px' }}>{log.student_nim} • {new Date(log.updated_at).toLocaleTimeString()}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#7f8c8d', marginLeft: '32px' }}>Timestamp: {new Date(log.timestamp).toLocaleString()}</div>
                         </div>
-                        <span className={`status-badge status-badge--${log.attendance_status === 'check_in' ? 'pending' : 'accepted'}`} style={{ minWidth: '90px', textAlign: 'center', fontWeight: 'bold' }}>{log.attendance_status === 'check_in' ? 'MASUK' : 'KELUAR'}</span>
+                        <span className={`status-badge status-badge--${log.type === 'IN' ? 'pending' : 'accepted'}`} style={{ minWidth: '90px', textAlign: 'center', fontWeight: 'bold' }}>{log.type}</span>
                       </li>
                     ))}
                   </ul>
