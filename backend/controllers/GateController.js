@@ -5,33 +5,36 @@ const knex = require('../config/database');
 
 router.post('/screen', async (req, res) => {
     try {
-        const { embedding } = req.body;
+        // PERBAIKAN: Ambil 'nim_detected' (sesuai kiriman Pipedream/HuggingFace)
+        const { nim_detected } = req.body;
 
-        if (!embedding) {
+        if (!nim_detected) {
+            console.log('⚠️ Request masuk tanpa NIM');
             return res.status(400).json({ message: 'Data scan tidak lengkap' });
         }
 
-        const user = await GateService.identifyUser(embedding);
+        console.log(`📡 Memproses scan untuk NIM: ${nim_detected}`);
+
+        // PERBAIKAN: Cari user berdasarkan NIM langsung
+        // Karena AI sudah melakukan tugas pengenalan wajah (Face Recognition)
+        const user = await knex('users').where({ nim: nim_detected }).first();
 
         if (!user) {
-            return res.status(404).json({ message: 'Wajah ga nemu' });
+            console.log(`❌ NIM ${nim_detected} tidak ditemukan di database.`);
+            return res.status(404).json({ message: 'Mahasiswa tidak terdaftar' });
         }
 
         const activePermission = await GateService.checkActivePermission(user.id);
 
         if (activePermission) {
-            console.log('✅ Active Permission Found:', {
+            console.log('✅ Izin Aktif Ditemukan:', {
                 userId: user.id,
-                permissionId: activePermission.id,
-                status: activePermission.status,
-                startTime: activePermission.start_time,
-                endTime: activePermission.end_time
+                nama: user.nama,
+                permissionId: activePermission.id
             });
 
-            // Determine type based on THIS permission's logs
+            // Tentukan tipe (IN/OUT) secara otomatis
             const autoType = await GateService.determineNextType(user.id, activePermission.id);
-
-            console.log('📍 Auto Type:', autoType);
 
             await knex('attendance_logs').insert({
                 permission_id: activePermission.id,
@@ -40,31 +43,19 @@ router.post('/screen', async (req, res) => {
             });
 
             return res.status(200).json({
-                message: `Akses diterima. ${autoType}, ${user.nama}!`,
+                message: `Akses diterima. ${autoType === 'IN' ? 'Selamat Datang' : 'Selamat Jalan'}, ${user.nama}!`,
                 type: autoType
             });
         } else {
-            console.log('❌ No Active Permission for user:', user.id, user.nama);
+            console.log('❌ Tidak ada izin aktif untuk:', user.nama);
 
-            // Check all permissions for debugging
-            const allPermissions = await knex('permissions')
-                .where({ user_id: user.id })
-                .select('*');
-
-            console.log('📋 All Permissions for user:', allPermissions.map(p => ({
-                id: p.id,
-                status: p.status,
-                start_time: p.start_time,
-                end_time: p.end_time
-            })));
-
-            // No active permission - create violation
+            // Jika tidak ada izin aktif, buat log pelanggaran (violation)
             const autoType = await GateService.determineNextType(user.id, null);
 
             const [violation] = await knex('permissions').insert({
                 user_id: user.id,
                 status: 'violation',
-                reason: `Terdeteksi mencoba melakukan ${autoType} tanpa izin resmi.`,
+                reason: `Mencoba ${autoType} tanpa izin resmi (Terdeteksi AI).`,
                 start_time: knex.fn.now(),
                 end_time: knex.fn.now()
             }).returning('*');
@@ -76,14 +67,14 @@ router.post('/screen', async (req, res) => {
             });
 
             return res.status(403).json({
-                message: `Pelanggaran! Anda mencoba ${autoType} tanpa izin.`,
+                message: `Pelanggaran! Anda mencoba ${autoType === 'IN' ? 'Masuk' : 'Keluar'} tanpa izin.`,
                 reason: 'No active permission'
             });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error server' })
+        console.error("🔥 GateController Error:", error);
+        res.status(500).json({ message: 'Error server' });
     }
-})
+});
 
 module.exports = router;
