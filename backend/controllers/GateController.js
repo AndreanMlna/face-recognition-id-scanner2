@@ -1,78 +1,68 @@
-const express = require('express');
-const router = express.Router();
-const GateService = require('../services/GateService');
-const knex = require('../config/database');
-
 router.post('/screen', async (req, res) => {
     try {
-        const { embedding } = req.body;
-
-        if (!embedding) {
-            return res.status(400).json({ message: 'Data scan tidak lengkap' });
+        const { nim_detected } = req.body;
+        if (!nim_detected) {
+            return res.status(400).json({ message: 'Data scan tidak lengkap (NIM Kosong)' });
         }
 
-        const user = await GateService.identifyUser(embedding);
+        const user = await knex('users')
+            .where('nim', nim_detected.toString().trim())
+            .first();
 
         if (!user) {
-            return res.status(404).json({ message: 'Wajah ga nemu' });
+            return res.status(404).json({ message: 'Mahasiswa tidak terdaftar' });
         }
 
         const activePermission = await GateService.checkActivePermission(user.id);
 
         if (activePermission) {
-            console.log('✅ Active Permission Found:', {
-                userId: user.id,
-                permissionId: activePermission.id,
-                status: activePermission.status,
-                startTime: activePermission.start_time,
-                endTime: activePermission.end_time
-            });
-
-            // Determine type based on THIS permission's logs
             const autoType = await GateService.determineNextType(user.id, activePermission.id);
+            const now = knex.fn.now();
 
-            console.log('📍 Auto Type:', autoType);
-
+            // 1. Masukkan ke Attendance Logs
             await knex('attendance_logs').insert({
                 permission_id: activePermission.id,
                 user_id: user.id,
-                type: autoType
+                type: autoType,
+                timestamp: now 
             });
+
+            // --- PERBAIKAN: Update tabel Permissions agar waktu IN/OUT muncul di Dashboard ---
+            const updateData = {};
+            if (autoType === 'OUT') {
+                updateData.check_out = now;
+                updateData.attendance_status = 'out'; // Status saat mahasiswa di luar
+            } else {
+                updateData.check_in = now;
+                updateData.attendance_status = 'completed'; // Status saat mahasiswa sudah kembali
+            }
+
+            await knex('permissions')
+                .where({ id: activePermission.id })
+                .update(updateData);
+            // -------------------------------------------------------------------------
 
             return res.status(200).json({
                 message: `Akses diterima. ${autoType}, ${user.nama}!`,
                 type: autoType
             });
         } else {
-            console.log('❌ No Active Permission for user:', user.id, user.nama);
-
-            // Check all permissions for debugging
-            const allPermissions = await knex('permissions')
-                .where({ user_id: user.id })
-                .select('*');
-
-            console.log('📋 All Permissions for user:', allPermissions.map(p => ({
-                id: p.id,
-                status: p.status,
-                start_time: p.start_time,
-                end_time: p.end_time
-            })));
-
-            // No active permission - create violation
+            // Logika Violation (Tetap sama)
             const autoType = await GateService.determineNextType(user.id, null);
-
             const [violation] = await knex('permissions').insert({
                 user_id: user.id,
                 status: 'violation',
                 reason: `Terdeteksi mencoba melakukan ${autoType} tanpa izin resmi.`,
                 start_time: knex.fn.now(),
-                end_time: knex.fn.now()
+                end_time: knex.fn.now(),
+                attendance_status: autoType === 'OUT' ? 'out' : 'completed'
             }).returning('*');
 
             await knex('attendance_logs').insert({
                 permission_id: violation.id,
                 user_id: user.id,
-                type: autoType
+                type: autoType,
+                timestamp: knex.fn.now()
             });
 
             return res.status(403).json({
@@ -81,9 +71,7 @@ router.post('/screen', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error server' })
+        console.error("🔥 GateController Error:", error);
+        res.status(500).json({ message: 'Error server' });
     }
-})
-
-module.exports = router;
+});
